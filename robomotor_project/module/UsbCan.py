@@ -36,18 +36,22 @@ class UsbCan:
         return
     
 class CanMessage:
-    def __init__(self, can_id: int, is_extended: bool) :
-        self.__id = can_id
-        self.__is_extended = is_extended
-        return
-    
-    def to_message_object(self,data):
+    def __init__(self, can_id: int, is_extended: bool, data_array) :
         msg = can.Message(
-            arbitration_id = self.__id,
-            is_extended_id = self.__is_extended,
-            dlc = len(data),
-            data = bytearray(data)
+            arbitration_id= can_id,
+            is_extended_id= is_extended,
+            dlc= len(data_array),
+            data= bytearray(data_array)
         )
         return msg
+    
+    # def to_message_object(self,data):
+    #     msg = can.Message(
+    #         arbitration_id = self.__id,
+    #         is_extended_id = self.__is_extended,
+    #         dlc = len(data),
+    #         data = bytearray(data)
+    #     )
+    #     return msg
     
         
