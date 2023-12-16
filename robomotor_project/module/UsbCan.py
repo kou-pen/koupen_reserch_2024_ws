@@ -35,6 +35,13 @@ class UsbCan:
             self.__can0.send(msg=message)
         return
     
+    def receive(self):
+        if self.__state == True:
+            msg = self.__can0.recv(0.05)
+        else:
+            msg = None
+        return msg
+    
 class CanMessage:
     def __init__(self, can_id: int, is_extended: bool, data_array) :
         msg = can.Message(
