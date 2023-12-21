@@ -43,14 +43,19 @@ class UsbCan:
         return msg
     
 class CanMessage:
-    def __init__(self, can_id: int, is_extended: bool, data_array) :
+    def msg_return(self, can_id: int, is_extended: bool, data_array) :
         msg = can.Message(
             arbitration_id= can_id,
             is_extended_id= is_extended,
             dlc= len(data_array),
-            data= bytearray(data_array)
+            # data= bytearray(data_array)
+            data= data_array
+            
         )
         return msg
+    
+    def __init__(self):
+        pass
     
     # def to_message_object(self,data):
     #     msg = can.Message(
