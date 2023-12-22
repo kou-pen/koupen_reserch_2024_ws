@@ -6,7 +6,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-Ucan = UsbCan()
+Ucan = UsbCan(1000000, 1000000)
 Ucan.open()
 
 fig = plt.figure()
