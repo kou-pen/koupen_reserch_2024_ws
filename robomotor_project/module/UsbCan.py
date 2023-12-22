@@ -37,7 +37,7 @@ class UsbCan:
     
     def receive(self):
         if self.__state == True:
-            msg = self.__can0.recv(0.05)
+            msg = self.__can0.recv(0.000001)
         else:
             msg = None
         return msg

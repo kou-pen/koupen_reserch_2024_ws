@@ -32,54 +32,60 @@ y3_feed = []
 
 cmd, feed = "blue", "green"
 
+
+
 def main():
+    motor1_command_data = 0
+    motor2_command_data = 0
+    motor3_command_data = 0
+    motor1_feedback_data = 0
+    motor2_feedback_data = 0
+    motor3_feedback_data = 0
     count = 0
     while True:
         count += 1
         rcv_msg = Ucan.receive()
         t.append(count)
+        print(hex(rcv_msg.arbitration_id), count)
         if rcv_msg.arbitration_id == 0x200:
             data_h_1 = rcv_msg.data[0]
             data_l_1 = rcv_msg.data[1]
             data_1 = joint_highlow_bit(data_h_1, data_l_1)
-            motor1_command_data = raw_rpm2rpm(data_1, 36)
+            motor1_command_data = data_1 * 0.05
             data_h_2 = rcv_msg.data[2]
             data_l_2 = rcv_msg.data[3]
             data_2 = joint_highlow_bit(data_h_2, data_l_2)
-            motor2_command_data = raw_rpm2rpm(data_2, 36)
+            motor2_command_data = data_2 * 0.05
             data_h_3 = rcv_msg.data[4]
             data_l_3 = rcv_msg.data[5]
             data_3 = joint_highlow_bit(data_h_3, data_l_3)
-            motor3_command_data = raw_rpm2rpm(data_3, 36)
+            motor3_command_data = data_3 * 0.05
             
         
-        elif rcv_msg.arbitration_id == 0x201:
-            data_h = rcv_msg.data[0]
-            data_l = rcv_msg.data[1]
-            data = joint_highlow_bit(data_h, data_l)
-            if data > 32768:
-                data -= 65535
-            motor1_feedback_data = raw_rpm2rpm(data, 36)
+        if rcv_msg.arbitration_id == 0x201:
+            m1_data_h = rcv_msg.data[0]
+            m1_data_l = rcv_msg.data[1]
+            m1_data = joint_highlow_bit(m1_data_h, m1_data_l)
+            if m1_data > 32768:
+                m1_data -= 65535
+            motor1_feedback_data = raw_rpm2rpm(m1_data, 36)
             
-        elif rcv_msg.arbitration_id == 0x202:
-            data_h = rcv_msg.data[2]
-            data_l = rcv_msg.data[3]
-            data = joint_highlow_bit(data_h, data_l)
-            if data > 32768:
-                data -= 65535
-            motor2_feedback_data = raw_rpm2rpm(data, 36)
+        if rcv_msg.arbitration_id == 0x202:
+            m2_data_h = rcv_msg.data[0]
+            m2_data_l = rcv_msg.data[1]
+            m2_data = joint_highlow_bit(m2_data_h, m2_data_l)
+            if m2_data > 32768:
+                m2_data -= 65535
+            motor2_feedback_data = raw_rpm2rpm(m2_data, 36)
             
-        elif rcv_msg.arbitration_id == 0x203:
-            data_h = rcv_msg.data[4]
-            data_l = rcv_msg.data[5]
-            data = joint_highlow_bit(data_h, data_l)
-            if data > 32768:
-                data -= 65535
-            motor3_feedback_data = raw_rpm2rpm(data, 36)
-            
-        else:
-            pass
-        
+        if rcv_msg.arbitration_id == 0x203:
+            m3_data_h = rcv_msg.data[0]
+            m3_data_l = rcv_msg.data[1]
+            m3_data = joint_highlow_bit(m3_data_h, m3_data_l)
+            if m3_data > 32768:
+                m3_data -= 65535
+            motor3_feedback_data = raw_rpm2rpm(m3_data, 36)
+      
         y1_feed.append(motor1_feedback_data)
         y2_feed.append(motor2_feedback_data)
         y3_feed.append(motor3_feedback_data)
@@ -95,7 +101,7 @@ def main():
         motor3_command_line, = ax3.plot(t, y3_cmd, color=cmd, linestyle='--')
         
         fig.tight_layout()
-        plt.pause(0.001)
+        plt.pause(0.05)
         
         motor1_feed_line.remove()
         motor2_feed_line.remove()
