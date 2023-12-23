@@ -22,34 +22,44 @@ class Wheels:
     def genelate_wheel(self):
         for i in range(self._num_of_wheel):
             self.__wheels_object.append(Wheel(i, 0x200, 1000000)) #TODO: 別IDでも対応できるようにする
-            # self.__feedback_object.append(FeedBack(**(self.__pid_gain_dict[i])))
+            self.__feedback_object.append(FeedBack(**(self.__pid_gain_dict[i])))
         return
     
     def calc_and_send_motor_power(self, x, y, r):
         result_mat = self.wheel_mat * np.matrix([[x],[y],[r]])
         result_2d_list = result_mat.tolist()
-        fixed_list = list(itertools.chain.from_iterable(result_2d_list)) # tire 1, 2, 3, (4)
+        fixed_list = list(itertools.chain.from_iterable(result_2d_list)) 
         
         # print(fixed_list)
         converted_to_rpm_list = list(map(rad_per_sec_2_rpm, fixed_list))
-        pid_proccessed_list = [] * self._num_of_wheel
-        print(converted_to_rpm_list)
+        print("convert_rpm" + str(converted_to_rpm_list))
         
-        # for i in range(self._num_of_wheel):
-        #     pid_proccessed_list[i] = (self.__feedback_object[i].pid_controll(converted_to_rpm_list[i], None)) #TODO: CANから取得するコード書け
+        pid_proccessed_list = [0] * self._num_of_wheel
+        
+        for i in range(self._num_of_wheel):
+            feedback_data = self.__wheels_object[i].sub_and_memory_can_feedback()
+            if feedback_data == 0:
+                print("return")
+                return
+            feedback_raw_rpm = joint_highlow_bit(feedback_data.data[2], feedback_data.data[3])
+            if feedback_raw_rpm> 32768:
+                feedback_raw_rpm -= 65535
+            feedback_rpm = int(raw_rpm2rpm(feedback_raw_rpm, 36))
+            print("raw RPM" + str(feedback_rpm))
+            pid_proccessed_list[i] = (self.__feedback_object[i].pid_controll(converted_to_rpm_list[i], feedback_rpm)) 
+            
+        print("pid "+ str(pid_proccessed_list))
             
                 
-        recalcued_to_robomas_command_list = list(map(lambda rpm: rpm_2_robomas_command(rpm), converted_to_rpm_list)) #TODO: lambda式を修正
-        # recalcued_to_robomas_command_list = list(map(lambda rps: rpm_2_robomas_command(rad_per_sec_2_rpm(rps)), converted_to_rpm_list)) #TODO: lambda式を修正
-        print(recalcued_to_robomas_command_list)
+        recalcued_to_robomas_command_list = list(map(lambda rpm: rpm_2_robomas_command(rpm), pid_proccessed_list)) #PID ON
+        # recalcued_to_robomas_command_list = list(map(lambda rpm: rpm_2_robomas_command(rpm), converted_to_rpm_list)) #PID OFF
         
-        # print(recalcued_to_robomas_command_list)
+        print("command " + str(recalcued_to_robomas_command_list))
         
         for i in range(self._num_of_wheel):
             self.__wheels_object[i].split_and_memory_can_command(int(recalcued_to_robomas_command_list[i]))
         self.__wheels_object[-1].send_can_command()
         
-    # def 
 
 
 class Omni_3_Wheels(Wheels):
@@ -87,6 +97,7 @@ class Mechanum_Wheels(Wheels):
 
 class Wheel:
     command_memory_array = [0] * 8
+    feedback_memory_array = [0] * 8
     def __init__(self, motor_id: int, can_id: int, bitrate: int) -> None:
         self.__robomotor_id = motor_id
         self.__can_id = can_id
@@ -102,9 +113,21 @@ class Wheel:
         data_h, data_l = split_highlow_bit(data)
         self.command_memory_array[self.__robomotor_id * 2] = data_h
         self.command_memory_array[self.__robomotor_id * 2 + 1] = data_l
+        
+    def sub_and_memory_can_feedback(self):
+        data = self.usb_can.receive()
+        if data.arbitration_id == self.__can_id + self.__robomotor_id + 1:
+            print(data)
+            self.feedback_memory_array[self.__robomotor_id] = data
+            return data
+        else:
+            print(self.feedback_memory_array[self.__robomotor_id])
+            return self.feedback_memory_array[self.__robomotor_id]
+        
+        
     
     def send_can_command(self):
-        print(self.command_memory_array)
+        print("array " + str(self.command_memory_array))
         self.usb_can.send(
             self.can_m.msg_return(
                 can_id=self.__can_id,
@@ -128,10 +151,15 @@ class FeedBack:
         self.__lasttime_result_rpm = 0.0
     
     def pid_controll(self,target_rpm: float, feedback_rpm: float):
+        print(target_rpm, feedback_rpm)
         self.__thistime_diff_rpm = target_rpm - feedback_rpm
+        print("thistime",self.__thistime_diff_rpm)
         self.__error_sum += (self.__thistime_diff_rpm) * 0.001
+        print("error sum", self.__error_sum)
         self.__error_diff = self.__lasttime_error_sum - self.__error_sum
+        print("error diff", self.__error_diff)
         self.__result_rpm = self.__lasttime_result_rpm + (self.__p_gain * self.__thistime_diff_rpm) + (self.__i_gain * self.__error_sum) + (self.__d_gain * self.__error_diff)
+        print("result", self.__result_rpm)
         
         self.__lasttime_error_sum = self.__error_sum
         self.__lasttime_result_rpm = self.__result_rpm

@@ -16,7 +16,7 @@ class JoyCommander(Node):
     
     joy_linux_sub_topic = "joy"
     
-    max_meter_per_sec = 2.0
+    max_meter_per_sec = 0.1
     CONTROLLER_MODE = ControllerType.F310.value
     
     def __init__(self):
@@ -28,10 +28,10 @@ class JoyCommander(Node):
         
         self.joy_tools = JoyCalcTools(self.CONTROLLER_MODE)
         
-        gain_dict_list = [
-            {'p_gain': 0.0, 'i_gain': 0.0, 'd_gain': 0.0},
-            {'p_gain': 0.0, 'i_gain': 0.0, 'd_gain': 0.0},
-            {'p_gain': 0.0, 'i_gain': 0.0, 'd_gain': 0.0}
+        gain_dict_list = [ #TODO: ゲイン調整
+            {'p_gain': 0.005, 'i_gain': 0.000, 'd_gain': 0.000},
+            {'p_gain': 0.005, 'i_gain': 0.000, 'd_gain': 0.000},
+            {'p_gain': 0.005, 'i_gain': 0.000, 'd_gain': 0.000}
         ]
         
         self.three_omni = Omni_3_Wheels(wheel_radius_meter=0.05 ,robot_radius_meter=0.3, gain_dict=gain_dict_list)
@@ -45,7 +45,7 @@ class JoyCommander(Node):
         r = joy_data[2] * (self.max_meter_per_sec / 128 )
         # print(joy_data)
         self.three_omni.calc_and_send_motor_power(x=x, y=y, r=r) # command
-        print(x, y, r)
+        print("joy", x, y, r)
         
         
     

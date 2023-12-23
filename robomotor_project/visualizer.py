@@ -63,24 +63,24 @@ def main():
             
         
         if rcv_msg.arbitration_id == 0x201:
-            m1_data_h = rcv_msg.data[0]
-            m1_data_l = rcv_msg.data[1]
+            m1_data_h = rcv_msg.data[2]
+            m1_data_l = rcv_msg.data[3]
             m1_data = joint_highlow_bit(m1_data_h, m1_data_l)
             if m1_data > 32768:
                 m1_data -= 65535
             motor1_feedback_data = raw_rpm2rpm(m1_data, 36)
             
         if rcv_msg.arbitration_id == 0x202:
-            m2_data_h = rcv_msg.data[0]
-            m2_data_l = rcv_msg.data[1]
+            m2_data_h = rcv_msg.data[2]
+            m2_data_l = rcv_msg.data[3]
             m2_data = joint_highlow_bit(m2_data_h, m2_data_l)
             if m2_data > 32768:
                 m2_data -= 65535
             motor2_feedback_data = raw_rpm2rpm(m2_data, 36)
             
         if rcv_msg.arbitration_id == 0x203:
-            m3_data_h = rcv_msg.data[0]
-            m3_data_l = rcv_msg.data[1]
+            m3_data_h = rcv_msg.data[2]
+            m3_data_l = rcv_msg.data[3]
             m3_data = joint_highlow_bit(m3_data_h, m3_data_l)
             if m3_data > 32768:
                 m3_data -= 65535
